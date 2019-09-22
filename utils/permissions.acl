@@ -1,0 +1,139 @@
+
+rule SystemACL {
+    description:  "System ACL to permit all access"
+    participant: "org.hyperledger.composer.system.Participant"
+    operation: ALL
+    resource: "org.hyperledger.composer.system.**"
+    action: ALLOW
+}
+
+rule NetworkAdminUser {
+    description: "Grant business network administrators full access to user resources"
+    participant: "org.hyperledger.composer.system.NetworkAdmin"
+    operation: ALL
+    resource: "**"
+    action: ALLOW
+}
+
+rule NetworkAdminSystem {
+    description: "Grant business network administrators full access to system resources"
+    participant: "org.hyperledger.composer.system.NetworkAdmin"
+    operation: ALL
+    resource: "org.hyperledger.composer.system.**"
+    action: ALLOW
+}
+
+rule CreateMedicament {
+    description: "Seul les Fabricants peuvent creer des Medicaments"
+    participant(m): "pharmatrack.Fabricant"
+    operation: CREATE
+    resource(v): "pharmatrack.Medicament"
+    condition: (v.proprio.getIdentifier() == m.getIdentifier())
+    action: ALLOW
+}
+
+rule ReadMedicament {
+    description: "Seul le proprietaire d'un medicament peut voir sa"
+    participant(m): "pharmatrack.EtablissementPharmaceutique"
+    operation: READ
+    resource(v): "pharmatrack.Medicament"
+    condition: (v.proprio.getIdentifier() == m.getIdentifier())
+    action: ALLOW
+}
+rule CreateBonCommande {
+    description: "Regle concernant la creation du bon de commande"
+    participant(m): "pharmatrack.*"
+    operation: CREATE
+    resource(v): "pharmatrack.BonCommande"
+    condition: (v.emetteur.getIdentifier() == m.getIdentifier() OR v.destinataire.getIdentifier() != m.getIdentifier())
+    action: ALLOW
+}
+rule ReadBonCommande {
+    description: "Regle concernant la lecture du bon de commande"
+    participant(m): "pharmatrack.*"
+    operation: READ
+    resource(v): "pharmatrack.BonCommande"
+    condition: (v.emetteur.getIdentifier() == m.getIdentifier() OR v.destinataire.getIdentifier() == m.getIdentifier())
+    action: ALLOW
+}
+
+rule CreateBonLivraison {
+    description: "Allow all paticipants to access TransferMedicament transaction"
+    participant: "pharmatrack.EtablissementPharmaceutique"
+    operation: CREATE
+    resource: "pharmatrack.BonLivraison"
+    action: ALLOW
+}
+
+rule ConditionRuleWithTransaction {
+  	description:"Allow all paticipants to transfer its own Medicament only by TransferMedicament"
+    participant(m): "pharmatrack.*"
+    operation: UPDATE
+    resource(v): "pharmatrack.*"
+    transaction(tx): "pharmatrack.TransferMedicament"
+    condition: (v.owner.getIdentifier() == m.getIdentifier())
+    action: ALLOW
+}
+
+rule ConditionalRuleWithTransaction2 {
+  	description:"Grant all paticipants to read its own transaction records"
+    participant(m): "pharmatrack.*"
+    operation: READ
+    resource(v): "pharmatrack.TransferMedicament"
+    condition: (v.issuer.getIdentifier() == m.getIdentifier())
+    action: ALLOW
+}
+
+rule ConditionalRuleWithTransaction3 {
+  	description:"Grant all participants to read its own transaction records"
+    participant(m): "pharmatrack.*"
+    operation: READ
+    resource(v): "pharmatrack.TransferMedicament"
+    condition: (v.newOwner.getIdentifier() == m.getIdentifier())
+    action: ALLOW
+}
+
+rule ConditionalRuleWithCreation {
+    description: "Grant all participants can create its own resource"
+    participant(m): "pharmatrack.*"
+    operation: CREATE
+    resource(v): "pharmatrack.Medicament"
+    condition: (v.owner.getIdentifier() == m.getIdentifier())
+    action: ALLOW
+}
+
+rule ConditionalRulewithCreationOfPO {
+    description:"Allow all paticipants to initiate PO"
+    participant(m): "pharmatrack.*"
+    operation: CREATE
+    resource(v): "pharmatrack.PO"
+    transaction(tx): "pharmatrack.InitiatePO"
+    condition: (v.orderer.getIdentifier() == m.getIdentifier())
+    action: ALLOW
+}
+
+rule RuleWithInitiatePOTransaction {
+    description: "Allow all paticipants to access Initiate PO transaction"
+    participant: "pharmatrack.*"
+    operation: CREATE
+    resource: "pharmatrack.InitiatePO"
+    action: ALLOW
+}
+
+rule VenderCanReadTransaction {
+  	description:"Grant all paticipants to read its own transaction records"
+    participant(m): "pharmatrack.*"
+    operation: READ
+    resource(v): "pharmatrack.InitiatePO"
+    condition: (v.vender.getIdentifier() == m.getIdentifier())
+    action: ALLOW
+}
+
+rule OrdererCanReadTransaction {
+  	description:"Grant all participants to read its own transaction records"
+    participant(m): "pharmatrack.*"
+    operation: READ
+    resource(v): "pharmatrack.InitiatePO"
+    condition: (v.orderer.getIdentifier() == m.getIdentifier())
+    action: ALLOW
+}
