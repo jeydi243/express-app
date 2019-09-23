@@ -33,13 +33,27 @@ router.get('/IssueIdentity', function (req, res) {
 
 });
 
-router.get('/Pharmacien', async function (req, res, next) {
+router.post('/addPharmacien', async function (req, res, next) {
+    //console.log("le corps d'une requete post est: " + req.body.numeroOrdre);
+    let result = "resultat de l'operation"
     try {
-
+        result = await bnUtil.AddPharmacien(req.body);
     } catch (error) {
-        console.log("epa: " + error);
+        console.log(error);
     }
-    res.send("fd");
+    console.log(result);
+
+    res.send(result);
+});
+router.post('/addEtablissement', async function (req, res, next) {
+    console.log("llllllllslslslslsls: ",req.body);
+    let result = "operation echoué"
+    try {
+        result = await bnUtil.AddEtablissement(req.body);
+    } catch (error) {
+        console.log(error);
+    }
+    res.send(result);
 });
 
 router.get('/getEtablissements', async function (req, res, next) {

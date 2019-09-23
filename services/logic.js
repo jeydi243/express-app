@@ -12,7 +12,7 @@ module.exports = {
             await businessNetworkConnection.connect(user);
             let etablissementRegistry = await businessNetworkConnection.getParticipantRegistry(namespace + "." + obj.typeEtablissement);
             let factory = businessNetworkConnection.getBusinessNetwork().getFactory();
-            let etablissement = factory.newResource(namespace, obj.type, obj.numAutorisation);
+            let etablissement = factory.newResource(namespace, obj.typeEtablissement, obj.numAutorisation);
 
 
             let adresse = factory.newConcept(namespace, 'Adresse');
@@ -41,13 +41,13 @@ module.exports = {
     },
     AddPharmacien: async function (obj, user = "admin@pharmatrack") {
         let businessNetworkConnection = new BusinessNetworkConnection();
-        console.log("le mondeE: " + obj.numOrdre.toString());
+        console.log("le mondeE: " + obj.numeroOrdre);
         try {
             await businessNetworkConnection.connect(user);
             let participantRegistry = await businessNetworkConnection.getParticipantRegistry(namespace + ".Pharmacien");
             let factory = businessNetworkConnection.getBusinessNetwork().getFactory();
 
-            let participant = factory.newResource(namespace, 'Pharmacien', obj.numOrdre);
+            let participant = factory.newResource(namespace, 'Pharmacien', obj.numeroOrdre);
 
 
             participant.nom = obj.nom;
@@ -95,12 +95,12 @@ module.exports = {
     AjouterUneIdentite: async function (obj, user = "admin@pharmatrack") {
         let businessNetworkConnection = new BusinessNetworkConnection();
         try {
-           
+
             await businessNetworkConnection.connect(user);
             let factory = businessNetworkConnection.getBusinessNetwork().getFactory();
             let parti = factory.newRelationship(namespace, "Pharmacien", obj.idParticipant);
-            let result = await businessNetworkConnection.issueIdentity(parti,obj.identite)
-            
+            let result = await businessNetworkConnection.issueIdentity(parti, obj.identite)
+
             let part = new participant();
             part.login = obj.login
             part.password = obj.password
@@ -214,5 +214,67 @@ module.exports = {
         });
 
     },
-    IsUser: function (obj) {}
+    IsGrossiste: async function (valeur, user = "admin@pharmatrack") {
+        let businessNetworkConnection = new BusinessNetworkConnection();
+        try {
+            await businessNetworkConnection.connect(user);
+            const query = connection.buildQuery('SELECT pharmatrack.Grossiste WHERE (numeroAutorisation == _$inputValue)');
+            const asset = await connection.query(query, {
+                inputValue: valeur
+            });
+            if(assets.length == 1){
+                return true;
+            }else{
+                return false;
+            }
+        } catch (error) {
+            console.log(error);
+        }
+
+    },
+    IsPharmacien: async function (valeur,user = "admin@pharmatrack") {let businessNetworkConnection = new BusinessNetworkConnection();
+        try {
+            await businessNetworkConnection.connect(user);
+            const query = connection.buildQuery('SELECT pharmatrack.Pharmacien WHERE (numeroAutorisation == _$inputValue)');
+            const assets = await connection.query(query, {
+                inputValue: valeur
+            });
+            if(assets.length == 1){
+                return true;
+            }else{
+                return false;
+            }
+        } catch (error) {
+            console.log(error);
+        }},
+    IsFabricant: async function (valeur, user = "admin@pharmatrack") {let businessNetworkConnection = new BusinessNetworkConnection();
+        try {
+            await businessNetworkConnection.connect(user);
+            const query = connection.buildQuery('SELECT pharmatrack.Fabricant WHERE (numeroAutorisation == _$inputValue)');
+            const assets = await connection.query(query, {
+                inputValue: valeur
+            });
+            if(assets.length == 1){
+                return true;
+            }else{
+                return false;
+            }
+        } catch (error) {
+            console.log(error);
+        }},
+    IsPharmacie: async function (valeur, user = "admin@pharmatrack") {let businessNetworkConnection = new BusinessNetworkConnection();
+        try {
+            await businessNetworkConnection.connect(user);
+            const query = connection.buildQuery('SELECT pharmatrack.Pharmacie WHERE (numeroAutorisation == _$inputValue)');
+            const asset = await connection.query(query, {
+                inputValue: valeur
+            });
+            if(assets.length == 1){
+                return true;
+            }else{
+                return false;
+            }
+        } catch (error) {
+            console.log(error);
+        }}
 }
