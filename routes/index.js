@@ -2,42 +2,35 @@ var express = require('express');
 var router = express.Router();
 const bnUtil = require('../services/logic');
 var BusinessNetworkConnection = require('composer-client').BusinessNetworkConnection;
-var connectionClient = new BusinessNetworkConnection();
-let participant = require('../services/db');
 
 
 router.post('/Connexion', async function (req, res) {
-    console.log(req.body);
-    res.send("respo");
-    
+    // console.log(req.body);
+    // let fd = await bnUtil.ListDesIdentites();
+    // res.send("monde: "+fd);
+
 });
 
 router.get('/AjouterUneIdentite', async function (req, res, next) {
+    let obj = {
+        typeEtablissement: "Pharmacien",
+        idParticipant: '!5', //doit correspondre a l'id d'un participant
+        identite: "samy",
+        login: "samy",
+        password: "123456789"
+    }
 
-    await bnUtil.AjouterUneIdentite();
+    bnUtil.AjouterUneIdentite(obj).then((result) => {
+        console.log("reussi: ", result);
+        res.send(result.toString());
+    }).catch((err) => {
+        console.log("mororororooror" + err);
+    });
 
-
-    let part = new participant();
-    part.name = req.nom
-    part.email = req.email
-    part.mobile = req.mobile
-    part.password = req.password
-    part.save((err) => {
-        res.send("MongoDB error: " + err);
-    })
 });
 
 router.get('/IssueIdentity', function (req, res) {
 
-    participant.find(function (error, Lesparticipants) {
-
-        if (!error) {
-            res.send("Le monde est beau " + Lesparticipants);
-        } else {
-            res.send("L'erreur est: " + error);
-        }
-
-    })
 });
 
 router.get('/Pharmacien', async function (req, res, next) {
@@ -49,17 +42,16 @@ router.get('/Pharmacien', async function (req, res, next) {
     res.send("fd");
 });
 
-router.get('/Etablissement', async function (req, res, next) {
-    let participants = {}
+router.get('/getEtablissements', async function (req, res, next) {
+    let all = "vide";
+
     try {
-        participants = await bnUtil.getEtablissement(req.params.obj);
-
-        console.log("Envoie de la liste des " + req.params.obj.typeParticipant);
-        res.send(participants);
-
+        all = await bnUtil.getEtablissements(req.query.participant);
+        console.log("Envoie de la liste des " + req.query.participant);
     } catch (error) {
-
+        console.log(error);
     }
+    res.send(all);
 })
 
 router.get('/Medicament', async function (req, res, next) {
@@ -105,5 +97,35 @@ router.get('/BonLivraison', async function (req, res, next) {
 
     }
 })
+
+router.get('/ListeDesIdentites', async function (req, res) {
+    let list = null
+    try {
+        list = await bnUtil.ListDesIdentites();
+    } catch (error) {
+        console.log(error);
+    }
+    res.send(list);
+});
+
+router.get('/f', async function (req, res) {
+    let fd = "la chaine est vide si sa ne marche pas"
+    try {
+        fd = await bnUtil.existe();
+    } catch (error) {
+        console.log(error);
+    }
+    res.send(fd);
+});
+
+router.get('/test', async function (req, res) {
+    let fd = "la chaine est vide si sa ne marche pas"
+    try {
+        fd = await bnUtil.testConnection();
+    } catch (error) {
+        console.log(error);
+    }
+    res.send(fd);
+});
 
 module.exports = router;

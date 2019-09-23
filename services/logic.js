@@ -1,12 +1,16 @@
 const BusinessNetworkConnection = require('composer-client').BusinessNetworkConnection;
+//const cli = require('composer-cli').create;
 const namespace = "pharmatrack";
+let participant = require('../services/db');
+
+
 
 module.exports = {
     AddEtablissement: async function (obj, user = "admin@pharmatrack") {
         let businessNetworkConnection = new BusinessNetworkConnection();
         try {
             await businessNetworkConnection.connect(user);
-            let etablissementRegistry = await businessNetworkConnection.getParticipantRegistry(namespace + "."+ obj.typeEtablissement);
+            let etablissementRegistry = await businessNetworkConnection.getParticipantRegistry(namespace + "." + obj.typeEtablissement);
             let factory = businessNetworkConnection.getBusinessNetwork().getFactory();
             let etablissement = factory.newResource(namespace, obj.type, obj.numAutorisation);
 
@@ -37,14 +41,14 @@ module.exports = {
     },
     AddPharmacien: async function (obj, user = "admin@pharmatrack") {
         let businessNetworkConnection = new BusinessNetworkConnection();
-        console.log("le mondeE: "+obj.numOrdre.toString());
+        console.log("le mondeE: " + obj.numOrdre.toString());
         try {
             await businessNetworkConnection.connect(user);
             let participantRegistry = await businessNetworkConnection.getParticipantRegistry(namespace + ".Pharmacien");
             let factory = businessNetworkConnection.getBusinessNetwork().getFactory();
 
             let participant = factory.newResource(namespace, 'Pharmacien', obj.numOrdre);
-            
+
 
             participant.nom = obj.nom;
             participant.email = obj.email;
@@ -74,7 +78,7 @@ module.exports = {
             //code qui sera necessaire a l'ajout d'une trace
             /*trace.datetime = obj.trace.datetime;
             trace.proprio = factory.newRelationship(namespace, "Fabricant" ,obj.trace.proprio)*/
-            
+
 
             Medicament.trace = trace;
             Medicament.lot = obj.lot;
@@ -91,12 +95,19 @@ module.exports = {
     AjouterUneIdentite: async function (obj, user = "admin@pharmatrack") {
         let businessNetworkConnection = new BusinessNetworkConnection();
         try {
-
+           
             await businessNetworkConnection.connect(user);
-            let result = await businessNetworkConnection.issueIdentity("pharmatrack." + obj.typeEtablissement + "#" + obj.name, obj.identite)
-
-            //console.log(`userID = ${result.userID}`);
-            //console.log(`userSecret = ${result.userSecret}`);
+            let factory = businessNetworkConnection.getBusinessNetwork().getFactory();
+            let parti = factory.newRelationship(namespace, "Pharmacien", obj.idParticipant);
+            let result = await businessNetworkConnection.issueIdentity(parti,obj.identite)
+            
+            let part = new participant();
+            part.login = obj.login
+            part.password = obj.password
+            part.identite = result.identityID
+            part.save((err) => {
+                res.send("Impossible d'ajouter une identité: " + err);
+            })
             await businessNetworkConnection.disconnect();
             return result;
 
@@ -104,7 +115,7 @@ module.exports = {
             console.log(error);
         }
     },
-    testConnection: async function (obj, user = "admin@pharmatrack") {
+    testConnection: async function (user = "admin@pharmatrack") {
         let businessNetworkConnection = new BusinessNetworkConnection();
         try {
             await businessNetworkConnection.connect(user);
@@ -116,7 +127,7 @@ module.exports = {
 
         }
     },
-    ListDesIdentites: async function (obj, user = "admin@pharmatrack") {
+    ListDesIdentites: async function (user = "admin@pharmatrack") {
         let businessNetworkConnection = new BusinessNetworkConnection();
         try {
             await businessNetworkConnection.connect(user);
@@ -124,14 +135,14 @@ module.exports = {
             let identities = await identityRegistry.getAll();
 
             identities.forEach((identity) => {
-                console.log(`identityId = ${identity.identityId}, name = ${identity.name}, state = ${identity.state}`);
+                //console.log("-!- "+identity.toString());
+                console.log(`identityId = ${identity.identityId}, id = ${identity.userID}, secret = ${identity.userSecret}, BusinessNetworkName = ${identity.BusinessNetworkName}`);
             });
 
             await businessNetworkConnection.disconnect();
             return identities;
         } catch (error) {
             console.log(error);
-            process.exit(1);
         }
     },
     ConfirmerBonLivraison: async function (obj, user = "admin@pharmatrack") {
@@ -163,11 +174,11 @@ module.exports = {
 
         }
     },
-    getEtablissement: async function(obj, user = "admin@pharmatrack"){
+    getEtablissements: async function (part, user = "admin@pharmatrack") {
         let businessNetworkConnection = new BusinessNetworkConnection();
         try {
             await businessNetworkConnection.connect(user);
-            let participantRegistry = await businessNetworkConnection.getParticipantRegistry(namespace+"."+obj.typeParticipant);
+            let participantRegistry = await businessNetworkConnection.getParticipantRegistry(namespace + "." + part);
             let participants = await participantRegistry.getAll();
 
             await businessNetworkConnection.disconnect();
@@ -176,11 +187,11 @@ module.exports = {
             console.log(error);
         }
     },
-    getAssets: async function (obj, user = "admin@pharmatrack"){
+    getAssets: async function (obj, user = "admin@pharmatrack") {
         let businessNetworkConnection = new BusinessNetworkConnection();
         try {
             await businessNetworkConnection.connect(user);
-            let AssetRegistry = await businessNetworkConnection.getAssetRegistry(namespace+"."+obj.typeAsset);
+            let AssetRegistry = await businessNetworkConnection.getAssetRegistry(namespace + "." + obj.typeAsset);
             let assets = await AssetRegistry.getAll();
 
             await businessNetworkConnection.disconnect();
@@ -188,5 +199,20 @@ module.exports = {
         } catch (error) {
             console.log(error);
         }
-    }
+    },
+    existe: async function (user = "admin@pharmatrack") {
+        let obj = {
+            login: "epa",
+            pass: "123456789"
+        }
+        participant.findOne({
+            login: obj.login,
+            password: obj.pass
+        }, function (err, participant) {
+            if (!err) console.log(participant);
+            console.log(err);
+        });
+
+    },
+    IsUser: function (obj) {}
 }
