@@ -2,12 +2,18 @@ var express = require('express');
 var router = express.Router();
 const bnUtil = require('../services/logic');
 var BusinessNetworkConnection = require('composer-client').BusinessNetworkConnection;
-
+let participant = require('../services/db');
 
 router.post('/Connexion', async function (req, res) {
-    // console.log(req.body);
-    // let fd = await bnUtil.ListDesIdentites();
-    // res.send("monde: "+fd);
+    if (req.body.login == "admin" && req.body.password == "adminpw") {
+
+        participant.findOne({
+            login: req.body.login,
+            pass: req.body.pass
+        })
+    } else {
+
+    }
 
 });
 
@@ -46,7 +52,7 @@ router.post('/addPharmacien', async function (req, res, next) {
     res.send(result);
 });
 router.post('/addEtablissement', async function (req, res, next) {
-    console.log("llllllllslslslslsls: ",req.body);
+    console.log("llllllllslslslslsls: ", req.body);
     let result = "operation echoué"
     try {
         result = await bnUtil.AddEtablissement(req.body);
@@ -133,13 +139,63 @@ router.get('/f', async function (req, res) {
 });
 
 router.get('/test', async function (req, res) {
-    let fd = "la chaine est vide si sa ne marche pas"
+    let fd, epa = null
     try {
         fd = await bnUtil.testConnection();
+        epa = await bnUtil.ListDesIdentites();
+        //fd = await bnUtil.bitsecret2();
     } catch (error) {
         console.log(error);
     }
+    console.log("Resultat: ", fd, "; ", epa)
     res.send(fd);
+});
+
+
+router.get('/IsGrossiste', async function (req, res) {
+
+    try {
+
+    } catch (error) {
+
+    }
+    res.send(fd);
+});
+router.post('/IsFabricant', async function (req, res) {
+    let result = false;
+    try {
+        result = await bnUtil.IsFabricant(req.body.valeur);
+    } catch (error) {
+
+    }
+    res.send(result);
+});
+router.post('/IsPharmacien', async function (req, res) {
+
+    try {
+
+    } catch (error) {
+
+    }
+    res.send(fd);
+});
+router.post('/IsPharmacie', async function (req, res) {
+
+    try {
+
+    } catch (error) {
+
+    }
+    res.send(fd);
+});
+router.get('/joelElmadovic', async function(req, res) {
+    let bv = ""
+    try {
+        bv = await bnUtil.bitsecret();
+    } catch (error) {
+        console.log(error);
+    }
+    res.send("Operation d'enregistrement");
 });
 
 module.exports = router;

@@ -3,10 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon ./bin/www"
+    "start": "nodemon bin/www"
   },
   "dependencies": {
     "composer-admin": "^0.20.8",
+    "composer-cli": "^0.20.8",
     "composer-client": "^0.20.8",
     "composer-common": "^0.20.8",
     "cookie-parser": "~1.4.4",
@@ -17,7 +18,8 @@
     "http-errors": "~1.6.3",
     "mongodb": "^3.3.2",
     "mongoose": "^5.7.1",
-    "morgan": "~1.9.1"
+    "morgan": "~1.9.1",
+    "nodemon": "^1.19.2"
   },
   "description": "Systeme de tracabilité",
   "main": "app.js",

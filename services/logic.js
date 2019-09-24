@@ -1,8 +1,12 @@
 const BusinessNetworkConnection = require('composer-client').BusinessNetworkConnection;
-//const cli = require('composer-cli').create;
-const namespace = "pharmatrack";
-let participant = require('../services/db');
+const IdentityIssue = require('composer-cli').Identity.Issue;
 
+const CardImport = require('composer-cli').Card.Import;
+const BusinessNetworkCardStore = require('composer-common').BusinessNetworkCardStore;
+const AdminConnection = require('composer-admin').AdminConnection;
+const adminConnection = new AdminConnection();
+const businessNetworkCardStore = new BusinessNetworkCardStore();
+const namespace = "pharmatrack";
 
 
 module.exports = {
@@ -14,17 +18,16 @@ module.exports = {
             let factory = businessNetworkConnection.getBusinessNetwork().getFactory();
             let etablissement = factory.newResource(namespace, obj.typeEtablissement, obj.numAutorisation);
 
+            let addresse = factory.newConcept(namespace, 'Addresse');
 
-            let adresse = factory.newConcept(namespace, 'Adresse');
-
-            adresse.ville = obj.adresse.ville;
-            adresse.province = obj.adresse.province;
-            adresse.avenue = obj.adresse.avenue;
-            adresse.numero = obj.adresse.numero;
+            addresse.ville = obj.addresse;
+            addresse.province = "katanga"
+            addresse.avenue = "lubumbashi"
+            addresse.numero = "20"
 
 
             etablissement.nom = obj.nom;
-            etablissement.adresse = adresse;
+            etablissement.addresse = addresse;
 
             let pharmacien = factory.newRelationship(namespace, "Pharmacien", obj.pharmacien); //obj.pharmacien doit etre l'identificateur du 
 
@@ -94,34 +97,48 @@ module.exports = {
     },
     AjouterUneIdentite: async function (obj, user = "admin@pharmatrack") {
         let businessNetworkConnection = new BusinessNetworkConnection();
-        try {
+        // try {
 
-            await businessNetworkConnection.connect(user);
-            let factory = businessNetworkConnection.getBusinessNetwork().getFactory();
-            let parti = factory.newRelationship(namespace, "Pharmacien", obj.idParticipant);
-            let result = await businessNetworkConnection.issueIdentity(parti, obj.identite)
+        //     await businessNetworkConnection.connect(user);
+        //     let factory = businessNetworkConnection.getBusinessNetwork().getFactory();
+        //     let parti = factory.newRelationship(namespace, "Pharmacien", obj.idParticipant);
+        //     let result = await businessNetworkConnection.issueIdentity(parti, obj.identite)
 
-            let part = new participant();
-            part.login = obj.login
-            part.password = obj.password
-            part.identite = result.identityID
-            part.save((err) => {
-                res.send("Impossible d'ajouter une identité: " + err);
-            })
-            await businessNetworkConnection.disconnect();
-            return result;
+        //     let part = new participant();
+        //     part.login = obj.login
+        //     part.password = obj.password
+        //     part.identite = result.identityID
+        //     part.save((err) => {
+        //         res.send("Impossible d'ajouter une identité: " + err);
+        //     })
+        //     await businessNetworkConnection.disconnect();
+        //     return result;
 
-        } catch (error) {
-            console.log(error);
+        // } catch (error) {
+        //     console.log(error);
+        // }
+        let options = {
+            card:'admin@pharmatrack',
+            file:obj.nom,
+            newUserId: obj.nom,
+            participantId: obj.participantId  //ex: "resource:pharmatrack.Pharmacie#cd120"
+
         }
+        IdentityIssue.handler(options);
+        CardImport.handler({
+            file:obj.nom+".card",
+        });
     },
-    testConnection: async function (user = "admin@pharmatrack") {
+    testConnection: async function (user = "philo@pharmatrack") {
         let businessNetworkConnection = new BusinessNetworkConnection();
         try {
             await businessNetworkConnection.connect(user);
             let result = await businessNetworkConnection.ping();
-            console.log(`participant = ${result.participant ? result.participant : '<pas de participant trouvé!>'}`);
+            console.log(`Participant = ${result.participant ? result.participant : '<pas de participant trouvé!>'}`);
+            
             await businessNetworkConnection.disconnect();
+            return result;
+
         } catch (error) {
             console.error(error);
 
@@ -154,7 +171,6 @@ module.exports = {
             let transaction = factory.newTransaction(namespace, "ConfirmerBonLivraison");
             let bonLivraison = factory.newRelationship(namespace, "BonLivraison", obj.BonLivraison);
             let oldproprio = factory.newRelationship(namespace, "EtablissementPharmaceutique", obj.proprio);
-            let identityRegistry = await businessNetworkConnection.getIdentityRegistry();
             let newproprio = null;
 
             transaction.sta = "LIVREE" // le status d'un Bon de commande
@@ -222,9 +238,9 @@ module.exports = {
             const asset = await connection.query(query, {
                 inputValue: valeur
             });
-            if(assets.length == 1){
+            if (assets.length == 1) {
                 return true;
-            }else{
+            } else {
                 return false;
             }
         } catch (error) {
@@ -232,49 +248,91 @@ module.exports = {
         }
 
     },
-    IsPharmacien: async function (valeur,user = "admin@pharmatrack") {let businessNetworkConnection = new BusinessNetworkConnection();
+    IsPharmacien: async function (valeur, user = "admin@pharmatrack") {
+        let businessNetworkConnection = new BusinessNetworkConnection();
         try {
             await businessNetworkConnection.connect(user);
             const query = connection.buildQuery('SELECT pharmatrack.Pharmacien WHERE (numeroAutorisation == _$inputValue)');
             const assets = await connection.query(query, {
                 inputValue: valeur
             });
-            if(assets.length == 1){
+            if (assets.length == 1) {
                 return true;
-            }else{
+            } else {
                 return false;
             }
         } catch (error) {
             console.log(error);
-        }},
-    IsFabricant: async function (valeur, user = "admin@pharmatrack") {let businessNetworkConnection = new BusinessNetworkConnection();
+        }
+    },
+    IsFabricant: async function (valeur, user = "admin@pharmatrack") {
+        let businessNetworkConnection = new BusinessNetworkConnection();
         try {
             await businessNetworkConnection.connect(user);
             const query = connection.buildQuery('SELECT pharmatrack.Fabricant WHERE (numeroAutorisation == _$inputValue)');
             const assets = await connection.query(query, {
                 inputValue: valeur
             });
-            if(assets.length == 1){
+            if (assets.length == 1) {
                 return true;
-            }else{
+            } else {
                 return false;
             }
         } catch (error) {
             console.log(error);
-        }},
-    IsPharmacie: async function (valeur, user = "admin@pharmatrack") {let businessNetworkConnection = new BusinessNetworkConnection();
+        }
+    },
+    IsPharmacie: async function (valeur, user = "admin@pharmatrack") {
+        let businessNetworkConnection = new BusinessNetworkConnection();
         try {
             await businessNetworkConnection.connect(user);
             const query = connection.buildQuery('SELECT pharmatrack.Pharmacie WHERE (numeroAutorisation == _$inputValue)');
             const asset = await connection.query(query, {
                 inputValue: valeur
             });
-            if(assets.length == 1){
+            if (assets.length == 1) {
                 return true;
-            }else{
+            } else {
                 return false;
             }
         } catch (error) {
             console.log(error);
-        }}
+        }
+    },
+    
+    getTrace: async function (code) {
+        let businessNetworkConnection = new BusinessNetworkConnection();
+        try {
+
+            await businessNetworkConnection.connect(user);
+            let AssetRegistry = await businessNetworkConnection.getAssetRegistry("pharmatrack.Medicament");
+            let medicament = await AssetRegistry.get(code); //code d'un medicament
+
+           return medicament.trace;
+        } catch (error) {
+            console.log(error);
+        }
+    },
+    bitsecret: async function(obj){
+        try {
+            let options = {
+                card:'admin@pharmatrack',
+                file:"joelElmadovich",
+                newUserId: "joelElmadovic",
+                participantId: "resource:pharmatrack.Pharmacie#!2"  //ex: "resource:pharmatrack.Pharmacie#cd120"
+    
+            }
+            IdentityIssue.handler(options);
+
+            CardImport.handler({
+                file:"joelElmadovic"+".card",
+            });
+        } catch (error) {
+            console.log(error);
+        }
+        
+    }
+
+
+
 }
