@@ -126,16 +126,6 @@ router.get('/ListeDesIdentites', async function (req, res) {
     res.send(list);
 });
 
-router.get('/f', async function (req, res) {
-    let fd = "la chaine est vide si sa ne marche pas"
-    try {
-        fd = await bnUtil.existe();
-    } catch (error) {
-        console.log(error);
-    }
-    res.send(fd);
-});
-
 router.get('/test', async function (req, res) {
     let fd, epa = null
     let transaction  = "H";
@@ -180,6 +170,17 @@ router.get('/IsMedicamentOrLot', async function(req, res) {
         console.log(error);
     }
     res.send("Operation d'enregistrement");
+});
+router.get('/find', (req, res) => {
+
+    participant.find().exec((err,docs)=>{
+        console.log(docs);
+    });
+
+    res.send("console log");
+});
+router.get('/getCrypto', (req, res) => {
+    res.send(crypto({length:7,type: 'base64'}));
 });
 
 module.exports = router;

@@ -64,12 +64,7 @@ module.exports = {
         });
 
         console.log("     \n ++! Fin de l'enregistrement de l'identité !++ \n");
-        consoole.log("   ** Debut Mongo DB **");
-        await addInmongo(params).then((result) => {
-            
-        }).catch((err) => {
-            console.log(err.stack);
-        });
+        
 
     },
     AddPharmacien: async function (obj) {
@@ -127,7 +122,7 @@ module.exports = {
     AjouterUneIdentite: async function (obj) {
         var pharmacien = ""
         var etablissement = " "
-
+        var mongoResult = ""
         try {
             pharmacien = await this.IsPharmacien(obj.pharmacien);
             etablissement = await this.IsEtablissement(obj);
@@ -147,12 +142,14 @@ module.exports = {
             }).catch((err) => {
                 console.log(err.stack)
             });
+            
+            let objet = Object.assign(obj,{identite:pharmacien.nom + "-" + pharmacien.numeroOrdre+"-"+timestamp+"@pharmatrack"});
+            mongoResult =  await addInmongo(objet);
+
         } catch (error) {
             console.log(error.stack)
         }
-
-
-        //this.addInmongo();
+       
     },
     testConnection: async function () {
         let businessNetworkConnection = new BusinessNetworkConnection();
@@ -333,11 +330,16 @@ module.exports = {
     addInmongo: async function (obj) {
         let user = new part();
         try {
-            var pharmacien = await this.IsPharmacien()
+            var pharmacien = await this.IsPharmacien(obj.pharmacien);
             user.nom = pharmacien.nom
-            user.nom = pharmacien.nom
+            user.email = pharmacien.email
+            user.numeroOrdre = pharmacien.numeroOrdre
+            user.login = pharmacien.login;
+            user.password = pharmacien.password
+            user.typeEtablissement = obj.type;
+            user.identite = obj.identite
         } catch (error) {
-            
+            console.log(error.stack);
         }
         
     }
