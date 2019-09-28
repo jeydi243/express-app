@@ -3,6 +3,7 @@ var router = express.Router();
 const bnUtil = require('../services/logic');
 var BusinessNetworkConnection = require('composer-client').BusinessNetworkConnection;
 let participant = require('../services/db');
+var crypto = require('crypto-random-string');
 
 router.post('/Connexion', async function (req, res) {
     if (req.body.login == "admin" && req.body.password == "adminpw") {
@@ -35,10 +36,6 @@ router.get('/AjouterUneIdentite', async function (req, res, next) {
 
 });
 
-router.get('/IssueIdentity', function (req, res) {
-
-});
-
 router.post('/addPharmacien', async function (req, res, next) {
     //console.log("le corps d'une requete post est: " + req.body.numeroOrdre);
     let result = "resultat de l'operation"
@@ -52,7 +49,8 @@ router.post('/addPharmacien', async function (req, res, next) {
     res.send(result);
 });
 router.post('/addEtablissement', async function (req, res, next) {
-    console.log("llllllllslslslslsls: ", req.body);
+
+    console.log("Données recus: ", req.body);
     let result = "operation echoué"
     try {
         result = await bnUtil.AddEtablissement(req.body);
@@ -140,58 +138,44 @@ router.get('/f', async function (req, res) {
 
 router.get('/test', async function (req, res) {
     let fd, epa = null
+    let transaction  = "H";
     try {
         fd = await bnUtil.testConnection();
-        epa = await bnUtil.ListDesIdentites();
+        //epa = await bnUtil.ListDesIdentites();
         //fd = await bnUtil.bitsecret2();
+        //transaction = await bnUtil.testTransaction();
     } catch (error) {
         console.log(error);
     }
-    console.log("Resultat: ", fd, "; ", epa)
-    res.send(fd);
+    console.log("Resultat transaction: ", fd)
+    res.send(transaction);
 });
 
-
-router.get('/IsGrossiste', async function (req, res) {
-
-    try {
-
-    } catch (error) {
-
-    }
-    res.send(fd);
-});
-router.post('/IsFabricant', async function (req, res) {
+router.post('/IsEtablissement', async function (req, res) {
     let result = false;
+    console.log("IsEtablissement:-- ",req.body);
     try {
-        result = await bnUtil.IsFabricant(req.body.valeur);
+        result = await bnUtil.IsEtablissement(req.body);
     } catch (error) {
-
+        console.log(error);
+        
     }
     res.send(result);
 });
+
 router.post('/IsPharmacien', async function (req, res) {
-
+    let result = false;
     try {
-
+        result = await bnUtil.IsPharmacien(req.body.valeur);
     } catch (error) {
-
+        console.log(error);
     }
-    res.send(fd);
+    res.send(result);
 });
-router.post('/IsPharmacie', async function (req, res) {
-
-    try {
-
-    } catch (error) {
-
-    }
-    res.send(fd);
-});
-router.get('/joelElmadovic', async function(req, res) {
+router.get('/IsMedicamentOrLot', async function(req, res) {
     let bv = ""
     try {
-        bv = await bnUtil.bitsecret();
+        bv = await bnUtil.IsMedicamentOrLot(obj,user);
     } catch (error) {
         console.log(error);
     }

@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon bin/www"
+    "start": "nodemon app.js -w .",
+    "dev": "pm2 start app.js -w "
   },
   "dependencies": {
     "composer-admin": "^0.20.8",
@@ -12,6 +13,7 @@
     "composer-common": "^0.20.8",
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",
+    "crypto-random-string": "^3.0.1",
     "debug": "~2.6.9",
     "ejs": "~2.6.1",
     "express": "~4.16.1",

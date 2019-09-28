@@ -7,7 +7,19 @@ mongoose.connect('mongodb://localhost/pharmatrack', {
 });
 
 //Export the model
-module.exports = mongoose.model('Participant', new mongoose.Schema({
+module.exports = mongoose.model('User', new mongoose.Schema({
+    nom: {
+        type: String,
+        required:true
+    },
+    numeroOrdre: {
+        type: String,
+        required: true
+    },
+    email: {
+        type: String,
+        required: true
+    },
     login: {
         type: String,
         required: true,
@@ -24,4 +36,8 @@ module.exports = mongoose.model('Participant', new mongoose.Schema({
         unique: true,
         index: true,
     },
+    typeEtablissement: {
+        type: String,
+        required: true,
+    }
 }));

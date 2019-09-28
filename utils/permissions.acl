@@ -45,7 +45,7 @@ rule CreateBonCommande {
     participant(m): "pharmatrack.*"
     operation: CREATE
     resource(v): "pharmatrack.BonCommande"
-    condition: (v.emetteur.getIdentifier() == m.getIdentifier() OR v.destinataire.getIdentifier() != m.getIdentifier())
+    condition: (v.emetteur.getIdentifier() == m.getIdentifier() || v.destinataire.getIdentifier() != m.getIdentifier())
     action: ALLOW
 }
 rule ReadBonCommande {
@@ -53,7 +53,7 @@ rule ReadBonCommande {
     participant(m): "pharmatrack.*"
     operation: READ
     resource(v): "pharmatrack.BonCommande"
-    condition: (v.emetteur.getIdentifier() == m.getIdentifier() OR v.destinataire.getIdentifier() == m.getIdentifier())
+    condition: (v.emetteur.getIdentifier() == m.getIdentifier() || v.destinataire.getIdentifier() == m.getIdentifier())
     action: ALLOW
 }
 
@@ -70,7 +70,7 @@ rule ConditionRuleWithTransaction {
     participant(m): "pharmatrack.*"
     operation: UPDATE
     resource(v): "pharmatrack.*"
-    transaction(tx): "pharmatrack.TransferMedicament"
+    transaction(tx): "pharmatrack.ConfirmerLivraison"
     condition: (v.owner.getIdentifier() == m.getIdentifier())
     action: ALLOW
 }
@@ -79,7 +79,7 @@ rule ConditionalRuleWithTransaction2 {
   	description:"Grant all paticipants to read its own transaction records"
     participant(m): "pharmatrack.*"
     operation: READ
-    resource(v): "pharmatrack.TransferMedicament"
+    resource(v): "pharmatrack.ConfirmerLivraison"
     condition: (v.issuer.getIdentifier() == m.getIdentifier())
     action: ALLOW
 }
@@ -88,7 +88,7 @@ rule ConditionalRuleWithTransaction3 {
   	description:"Grant all participants to read its own transaction records"
     participant(m): "pharmatrack.*"
     operation: READ
-    resource(v): "pharmatrack.TransferMedicament"
+    resource(v): "pharmatrack.ConfirmerLivraison"
     condition: (v.newOwner.getIdentifier() == m.getIdentifier())
     action: ALLOW
 }
@@ -106,17 +106,16 @@ rule ConditionalRulewithCreationOfPO {
     description:"Allow all paticipants to initiate PO"
     participant(m): "pharmatrack.*"
     operation: CREATE
-    resource(v): "pharmatrack.PO"
-    transaction(tx): "pharmatrack.InitiatePO"
+    resource(v): "pharmatrack.BonCommande"
     condition: (v.orderer.getIdentifier() == m.getIdentifier())
     action: ALLOW
 }
 
-rule RuleWithInitiatePOTransaction {
-    description: "Allow all paticipants to access Initiate PO transaction"
+rule CreerBonCommande{
+    description: "Permission pour creer un bon de commande"
     participant: "pharmatrack.*"
     operation: CREATE
-    resource: "pharmatrack.InitiatePO"
+    resource: "pharmatrack.BonCommande"
     action: ALLOW
 }
 
@@ -124,7 +123,7 @@ rule VenderCanReadTransaction {
   	description:"Grant all paticipants to read its own transaction records"
     participant(m): "pharmatrack.*"
     operation: READ
-    resource(v): "pharmatrack.InitiatePO"
+    resource(v): "pharmatrack.BonCommande"
     condition: (v.vender.getIdentifier() == m.getIdentifier())
     action: ALLOW
 }
@@ -133,7 +132,7 @@ rule OrdererCanReadTransaction {
   	description:"Grant all participants to read its own transaction records"
     participant(m): "pharmatrack.*"
     operation: READ
-    resource(v): "pharmatrack.InitiatePO"
+    resource(v): "pharmatrack.BonCommande"
     condition: (v.orderer.getIdentifier() == m.getIdentifier())
     action: ALLOW
 }
