@@ -19,27 +19,13 @@ module.exports = {
             let factory = businessNetworkConnection.getBusinessNetwork().getFactory();
             let etablissement = factory.newResource(namespace, obj.typeEtablissement, obj.numAutorisation);
 
-            let addresse = factory.newConcept(namespace, 'Addresse');
-
-            addresse.ville = obj.addresse;
-            addresse.province = "Kinshasa"
-            addresse.avenue = "likasi"
-            addresse.numero = "45"
-
-
             etablissement.nom = obj.nom;
-            etablissement.addresse = addresse;
+            etablissement.adresse = obj.addresse;
 
             let pharmacien = factory.newRelationship(namespace, "Pharmacien", obj.pharmacien); //obj.pharmacien doit etre l'identificateur du 
 
             etablissement.pharmaciengerant = pharmacien;
-            etablissement.login = obj.login;
-            etablissement.pass = obj.pass;
-
-
             await etablissementRegistry.add(etablissement);
-
-
 
             await businessNetworkConnection.disconnect();
             console.log("--!- Deconnexion -!--");
@@ -56,15 +42,12 @@ module.exports = {
         };
         console.log("     \n ++! Debut de l'enregistrement de l'identité !++ \n");
         this.AjouterUneIdentite(params).then((result) => {
-            console.log(params);
-            console.log(result);
+            // console.log(params);
+            // console.log(result);
         }).catch((err) => {
             console.log(err.stack);
             console.log("*** Erreur ***");
-        });
-
-        console.log("     \n ++! Fin de l'enregistrement de l'identité !++ \n");
-        
+        });        
 
     },
     AddPharmacien: async function (obj) {
@@ -119,10 +102,72 @@ module.exports = {
             console.error(error);
         }
     },
+    AddBonCommande: async function (obj) {
+        let businessNetworkConnection = new BusinessNetworkConnection();
+        try {
+            await businessNetworkConnection.connect(this.user);
+            let MedicamentRegistry = await businessNetworkConnection.getAssetRegistry(namespace + ".Medicament");
+            let factory = businessNetworkConnection.getBusinessNetwork().getFactory();
+
+            let Medicament = factory.newResource(namespace, 'Medicament', obj.code);
+
+            Medicament.nom = obj.nom;
+            Medicament.description = obj.description;
+            Medicament.dateFab = obj.dateFab;
+            Medicament.dateExp = obj.dateExp;
+            Medicament.prixUnitaire = obj.prixUnitaire;
+
+            let trace = factory.newConcept(namespace, 'Trace');
+            //code qui sera necessaire a l'ajout d'une trace
+            /*trace.datetime = obj.trace.datetime;
+            trace.proprio = factory.newRelationship(namespace, "Fabricant" ,obj.trace.proprio)*/
+
+
+            Medicament.trace = trace;
+            Medicament.lot = obj.lot;
+
+            let proprio = factory.newRelationship(namespace, "Fabricant", obj.fabricant); // obj.fabricant doit correspondre a l'identité du fabricant(n)
+            Medicament.proprio = proprio;
+
+            await MedicamentRegistry.add(Medicament);
+            await businessNetworkConnection.disconnect();
+        } catch (error) {
+            console.error(error);
+        }
+    },
+    AddBonLivraison: async function (obj) {
+        let businessNetworkConnection = new BusinessNetworkConnection();
+        try {
+            await businessNetworkConnection.connect(this.user);
+            let BonLivraisonRegistry = await businessNetworkConnection.getAssetRegistry(namespace + ".BonLivraison");
+            let factory = businessNetworkConnection.getBusinessNetwork().getFactory();
+            let bonLivraison = factory.newResource(namespace, 'BonLivraison', obj.code);
+            let my_array = []
+
+
+            obj.codes.forEach(element => {
+                let medicament = factory.newRelationship(namespace, 'Medicament', element);
+                my_array.push(medicament)
+            });
+
+            
+            bonLivraison.medocs = my_array;
+            bonLivraison.destinataire = factory.newRelationship(namespace, obj.typeDestinataire,obj.destinataire);
+            bonLivraison.emetteur = factory.newRelationship(namespace, obj.typeEmetteur,obj.obj.emetteur);
+            bonLivraison.bonCommande = factory.newRelationship(namespace, "BonCommande", obj.boncommande);
+
+            await BonLivraisonRegistry.add(bonLivraison);
+            await businessNetworkConnection.disconnect();
+
+        } catch (error) {
+            console.error(error);
+        }
+    },
     AjouterUneIdentite: async function (obj) {
         var pharmacien = ""
         var etablissement = " "
         var mongoResult = ""
+        
         try {
             pharmacien = await this.IsPharmacien(obj.pharmacien);
             etablissement = await this.IsEtablissement(obj);
@@ -143,8 +188,8 @@ module.exports = {
                 console.log(err.stack)
             });
             
-            let objet = Object.assign(obj,{identite:pharmacien.nom + "-" + pharmacien.numeroOrdre+"-"+timestamp+"@pharmatrack"});
-            mongoResult =  await addInmongo(objet);
+            let objet = Object.assign(obj,{cardToUse:pharmacien.nom + "-" + pharmacien.numeroOrdre+"-"+timestamp+"@pharmatrack"});
+            mongoResult =  await this.addInmongo(objet);
 
         } catch (error) {
             console.log(error.stack)
@@ -198,18 +243,11 @@ module.exports = {
 
             transaction.sta = "LIVREE" // le status d'un Bon de commande
             transaction.bonlivraison = bonLivraison;
-            transaction.oldproprio = oldproprio;
             transaction.newproprio = newproprio;
 
-            var newTrace = factory.newConcept(namespace, 'Trace');
-            newTrace.datetime = new Date();
-            newTrace.etablissement =
-
-                bonLivraison.medocs.forEach(medicament => {
-                    medicament.trace.push(newTrace);
-                    medicament.proprio = newproprio;
-
-                });
+            // var newTrace = factory.newConcept(namespace, 'Trace');
+            // newTrace.datetime = new Date();
+            // newTrace.etablissement = newproprio;
 
             await businessNetworkConnection.submitTransaction(transaction);
             await businessNetworkConnection.disconnect();
@@ -217,6 +255,24 @@ module.exports = {
         } catch (error) {
             console.log(error);
 
+        }
+    },
+    IsMedicament:async function(obj){
+        let businessNetworkConnection = new BusinessNetworkConnection();
+        try {
+            await businessNetworkConnection.connect(obj.cardToUse)
+            let participantRegistry = await businessNetworkConnection.getParticipantRegistry(namespace + "." + obj.type);
+            let state = await participantRegistry.exists(obj.valeur);
+            if (state != false) {
+                participant = await participantRegistry.get(obj.valeur);
+                await businessNetworkConnection.disconnect();
+                return participant;
+            } else {
+                await businessNetworkConnection.disconnect();
+                return false;
+            }
+        } catch (error) {
+            console.log(error);
         }
     },
     getEtablissements: async function (part) {
@@ -297,6 +353,26 @@ module.exports = {
         }
 
     },
+    IsBoncommande: async function (obj) {
+        let businessNetworkConnection = new BusinessNetworkConnection();
+        try {
+            await businessNetworkConnection.connect(obj.cardToUse)
+            let participantRegistry = await businessNetworkConnection.getParticipantRegistry(namespace + ".BonCommande");
+            let state = await participantRegistry.exists(obj.valeur);
+
+            if (state != false) {
+                participant = await participantRegistry.get(obj.valeur);
+                await businessNetworkConnection.disconnect();
+                return participant;
+            } else {
+                await businessNetworkConnection.disconnect();
+                return false;
+            }
+        } catch (error) {
+            console.log(error);
+        }
+
+    },
     getTrace: async function (code) {
         let businessNetworkConnection = new BusinessNetworkConnection();
         try {
@@ -337,7 +413,10 @@ module.exports = {
             user.login = pharmacien.login;
             user.password = pharmacien.password
             user.typeEtablissement = obj.type;
-            user.identite = obj.identite
+            user.cardToUse = obj.cardToUse
+            user.save(function(err,res){
+                console.log(res);
+            });
         } catch (error) {
             console.log(error.stack);
         }

@@ -25,12 +25,12 @@ module.exports = mongoose.model('User', new mongoose.Schema({
         required: true,
         index: true,
     },
-    password: {
+    pass: {
         type: String,
         required: true,
         unique: true,
     },
-    identite: {
+    cardToUse: {
         type: String,
         required: true,
         unique: true,

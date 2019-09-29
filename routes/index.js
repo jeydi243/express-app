@@ -2,39 +2,32 @@ var express = require('express');
 var router = express.Router();
 const bnUtil = require('../services/logic');
 var BusinessNetworkConnection = require('composer-client').BusinessNetworkConnection;
-let participant = require('../services/db');
+let User = require('../services/db');
 var crypto = require('crypto-random-string');
 
-router.post('/Connexion', async function (req, res) {
-    if (req.body.login == "admin" && req.body.password == "adminpw") {
+/**RETIENT UNE REQUETE GET:  req.query */
 
-        participant.findOne({
-            login: req.body.login,
-            pass: req.body.pass
-        })
+
+router.get('/Connexion',(req, res) => {
+    let response = ""
+
+    if (req.query.login == "admin" && req.query.pass == "adminpw") {
+        res.send({cardToUse: "admin@pharmatrack", typeEtablissement: "admin"});
     } else {
-
+        User.findOne({
+            login: req.query.login,
+            pass: req.query.pass
+        },function (err, user) {
+            if(!err){
+                response = {cardToUse: user.cardToUse, typeEtablissement: user.typeEtablissement}
+            }else{
+                console.log(err);
+            }
+        });
     }
+    res.send(response);
 
-});
-
-router.get('/AjouterUneIdentite', async function (req, res, next) {
-    let obj = {
-        typeEtablissement: "Pharmacien",
-        idParticipant: '!5', //doit correspondre a l'id d'un participant
-        identite: "samy",
-        login: "samy",
-        password: "123456789"
-    }
-
-    bnUtil.AjouterUneIdentite(obj).then((result) => {
-        console.log("reussi: ", result);
-        res.send(result.toString());
-    }).catch((err) => {
-        console.log("mororororooror" + err);
-    });
-
-});
+})
 
 router.post('/addPharmacien', async function (req, res, next) {
     //console.log("le corps d'une requete post est: " + req.body.numeroOrdre);
@@ -48,6 +41,7 @@ router.post('/addPharmacien', async function (req, res, next) {
 
     res.send(result);
 });
+
 router.post('/addEtablissement', async function (req, res, next) {
 
     console.log("Données recus: ", req.body);
@@ -96,7 +90,7 @@ router.get('/BonCommande', async function (req, res, next) {
         });
         console.log("Envoie de la liste des " + req.params.obj.typeParticipant);
     } catch (error) {
-
+        console.log(error.stack);
     }
     res.send(Assets);
 })
@@ -115,6 +109,20 @@ router.get('/BonLivraison', async function (req, res, next) {
 
     }
 })
+
+router.post('/AddBonLivraison', (req, res) => {
+    let result;
+    try {
+        result = bnUtil.AddBonLivraison(Object.assign(req.body,req.query));
+    } catch (error) {
+        
+    } 
+    res.send(1);
+});
+router.post('/AddBonCommande', (req, res) => {
+
+    res.send(1);
+});
 
 router.get('/ListeDesIdentites', async function (req, res) {
     let list = null
@@ -162,25 +170,40 @@ router.post('/IsPharmacien', async function (req, res) {
     }
     res.send(result);
 });
-router.get('/IsMedicamentOrLot', async function(req, res) {
+
+router.get('/IsMedicament', async function(req, res) {
     let bv = ""
     try {
-        bv = await bnUtil.IsMedicamentOrLot(obj,user);
+        bv = await bnUtil.IsMedicament(obj);
     } catch (error) {
         console.log(error);
     }
     res.send("Operation d'enregistrement");
 });
-router.get('/find', (req, res) => {
 
-    participant.find().exec((err,docs)=>{
+router.get('/find', (req, res) => {
+    let resultat =""
+    User.find({},"nom email login").exec((err,docs)=>{
         console.log(docs);
+        resultat = docs
     });
 
-    res.send("console log");
+    res.send(resultat);
 });
+
 router.get('/getCrypto', (req, res) => {
     res.send(crypto({length:7,type: 'base64'}));
 });
+
+router.get('/inte', (req, res) => {
+    console.log("Get systeme: ",req.query.cardToUse);
+    res.send("getRequest");
+});
+
+router.post('/inte', (req, res) => {
+    console.log("Post systeme: ",req.query.cardToUse);
+    res.send("postRequest");
+});
+
 
 module.exports = router;
