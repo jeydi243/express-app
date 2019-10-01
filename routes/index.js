@@ -8,25 +8,34 @@ var crypto = require('crypto-random-string');
 /**RETIENT UNE REQUETE GET:  req.query */
 
 
-router.get('/Connexion',(req, res) => {
-    let response = ""
-
-    if (req.query.login == "admin" && req.query.pass == "adminpw") {
-        res.send({cardToUse: "admin@pharmatrack", typeEtablissement: "admin"});
+router.post('/Connexion',(req, res) => {
+    var response = ""
+    console.log(req.body.login);
+    console.log(req.body.pass);
+    if (req.body.login == "admin" && req.body.pass == "adminpw") {
+        response = {cardToUse: "admin@pharmatrack",typeEtablissement:"admin"}
+        res.send(response);
     } else {
         User.findOne({
-            login: req.query.login,
-            pass: req.query.pass
+            login: req.body.login,
+            pass: req.body.pass
         },function (err, user) {
             if(!err){
-                response = {cardToUse: user.cardToUse, typeEtablissement: user.typeEtablissement}
+                response = {
+                    cardToUse: user.cardToUse,
+                    typeEtablissement: user.typeEtablissement,
+                    numAutorisation: user.numAutorisation,
+                    login: user.login,
+                    pass: user.pass
+                }
+                console.log(user);
+                res.send(user);
             }else{
                 console.log(err);
             }
         });
     }
-    res.send(response);
-
+    
 })
 
 router.post('/addPharmacien', async function (req, res, next) {
@@ -43,9 +52,7 @@ router.post('/addPharmacien', async function (req, res, next) {
 });
 
 router.post('/addEtablissement', async function (req, res, next) {
-
-    console.log("Données recus: ", req.body);
-    let result = "operation echoué"
+    let result = ""
     try {
         result = await bnUtil.AddEtablissement(req.body);
     } catch (error) {
@@ -54,60 +61,40 @@ router.post('/addEtablissement', async function (req, res, next) {
     res.send(result);
 });
 
-router.get('/getEtablissements', async function (req, res, next) {
-    let all = "vide";
+router.post('/getEtablissements', async function (req, res, next) {
+    let all = [];
 
     try {
-        all = await bnUtil.getEtablissements(req.query.participant);
-        console.log("Envoie de la liste des " + req.query.participant);
-    } catch (error) {
-        console.log(error);
-    }
-    res.send(all);
-})
-
-router.get('/Medicament', async function (req, res, next) {
-    let Assets = {}
-    try {
-        //Assets = await bnUtil.getAssets(req.params.obj);
-        Assets = await bnUtil.getAssets({
-            typeAsset: "Medicament"
-        });
-        console.log("Envoie de la liste des " + req.params.obj.typeParticipant);
-
-    } catch (error) {
-
-    }
-    res.send(Assets);
-})
-
-router.get('/BonCommande', async function (req, res, next) {
-    let Assets = {};
-    try {
-        // Assets = await bnUtil.getAssets(req.params.obj);
-        Assets = await bnUtil.getAssets({
-            typeAsset: "BonCommande"
-        });
-        console.log("Envoie de la liste des " + req.params.obj.typeParticipant);
+        all = await bnUtil.getEtablissements(req.body.typeEtablissement);
+        console.log(req.body.typeEtablissement);
+        res.send(all);
     } catch (error) {
         console.log(error.stack);
     }
-    res.send(Assets);
+    
 })
+router.post("/addMedicament", async function(req,res, next){
 
-router.get('/BonLivraison', async function (req, res, next) {
-    let Assets = {}
+    console.log("addMedicament: ",req.body);
+
+    try{
+        var reponse = await bnUtil.AddMedicament(req.body);
+        res.send("je sui");
+    }catch(err){
+        console.log(err.stack);
+    };
+});
+router.post('/getAssets', async function (req, res, next) {
+    console.log("------Query----\n ",req.body);
+    var Assets =[]
+
     try {
-        // Assets = await bnUtil.getAssets(req.params.obj);
-        Assets = await bnUtil.getAssets({
-            typeAsset: "BonLivraison"
-        });
-        console.log("Envoie de la liste des " + req.params.obj.typeParticipant);
+        Assets = await bnUtil.getAssets(req.body);
         res.send(Assets);
-
     } catch (error) {
-
+        console.log(error.stack);
     }
+    
 })
 
 router.post('/AddBonLivraison', (req, res) => {
@@ -119,9 +106,17 @@ router.post('/AddBonLivraison', (req, res) => {
     } 
     res.send(1);
 });
-router.post('/AddBonCommande', (req, res) => {
 
-    res.send(1);
+router.post('/AddBonCommande', async(req, res) => {
+    let result = "vide";
+    try {
+        result = await bnUtil.AddBonCommande(req.body);
+        res.send(result);
+    } catch (error) {
+        console.log(error.stack);
+    }
+
+    
 });
 
 router.get('/ListeDesIdentites', async function (req, res) {
@@ -151,12 +146,11 @@ router.get('/test', async function (req, res) {
 
 router.post('/IsEtablissement', async function (req, res) {
     let result = false;
-    console.log("IsEtablissement:-- ",req.body);
+
     try {
         result = await bnUtil.IsEtablissement(req.body);
     } catch (error) {
-        console.log(error);
-        
+        console.log(error.stack);   
     }
     res.send(result);
 });
@@ -181,9 +175,49 @@ router.get('/IsMedicament', async function(req, res) {
     res.send("Operation d'enregistrement");
 });
 
+router.get('/getTrace', async function(req, res) {
+
+    let result;
+    bnUtil.getTrace(req.query.code).then((result) => {
+        console.log(result);
+        res.send(result);
+    }).catch((err) => {
+        console.log(err.stack); 
+    });
+
+   
+});
+
+router.post('/confirmerLivraison', async function(req, res) {
+    let result;
+    bnUtil.ConfirmerLivraison(req.body.code).then((result) => {
+        res.send(result);
+    }).catch((err) => {
+        console.log(err.stack); 
+    });
+
+   
+});
+router.post('/IsBonLivraison', (req, res) => {
+    try {
+        var result = await bnUtil.IsBonLivraison(req.body);
+        res.send(result)
+    } catch (error) {
+        console.log(error.stack);
+    }
+});
+router.post('/IsBonCommande', (req, res) => {
+    try {
+        var result = await bnUtil.IsBonCommande(req.body);
+        res.send(result)
+    } catch (error) {
+        console.log(error.stack);
+    }
+});
+
 router.get('/find', (req, res) => {
     let resultat =""
-    User.find({},"nom email login").exec((err,docs)=>{
+    User.find({},"login pass numAutorisation cardToUse typeEtablissement",{lean:true}).exec((err,docs)=>{
         console.log(docs);
         resultat = docs
     });
@@ -194,16 +228,5 @@ router.get('/find', (req, res) => {
 router.get('/getCrypto', (req, res) => {
     res.send(crypto({length:7,type: 'base64'}));
 });
-
-router.get('/inte', (req, res) => {
-    console.log("Get systeme: ",req.query.cardToUse);
-    res.send("getRequest");
-});
-
-router.post('/inte', (req, res) => {
-    console.log("Post systeme: ",req.query.cardToUse);
-    res.send("postRequest");
-});
-
 
 module.exports = router;
