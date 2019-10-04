@@ -112,9 +112,16 @@ module.exports = {
             let factory = businessNetworkConnection.getBusinessNetwork().getFactory();
 
             let BonCommande = factory.newResource(namespace, 'BonCommande', obj.Id);
+            tab = []
+            obj.itemList.forEach(function(element){
+                var e = factory.newConcept(namespace, 'itemList');
+                e.qte = parseInt(element.qte);
+                e.medicament = element.medoc
+                tab.push(e);
+            })
+            
         
-            BonCommande.nom = obj.nom;
-            BonCommande.medocs = obj.itemlist;
+            BonCommande.medocs = tab
             BonCommande.emetteur =  factory.newRelationship(namespace, obj.typeEtablissement, obj.numAutorisation)
             BonCommande.destinataire = factory.newRelationship(namespace, obj.typeEtablissementDestinataire, obj.numAutorisation)
 
@@ -280,7 +287,7 @@ module.exports = {
     getAssets: async function (obj) {
         let businessNetworkConnection = new BusinessNetworkConnection();
         try {
-            await businessNetworkConnection.connect(obj.currentUser.cardToUse);
+            await businessNetworkConnection.connect(obj.cardToUse);
             let AssetRegistry = await businessNetworkConnection.getAssetRegistry(namespace + "." + obj.typeAsset);
             let assets = await AssetRegistry.getAll();
             await businessNetworkConnection.disconnect();
@@ -380,9 +387,11 @@ module.exports = {
             let assetRegistry = await businessNetworkConnection.getAssetRegistry(namespace + ".Medicament");
             let state = await assetRegistry.exists(code);
             if (state != false) {
-                med = await assetRegistry.get(code);
+                //med = await assetRegistry.get(code);
+                med = await assetRegistry.resolve(code);
                 await businessNetworkConnection.disconnect();
-                return med.toJSON().trace;
+                //return med.toJSON().trace;
+                return med.trace;
             } else {
                 await businessNetworkConnection.disconnect();
                 return false;
@@ -425,5 +434,57 @@ module.exports = {
         } catch (error) {
             console.log(error);
         }
+    },
+    getEmetteurOfBonCommande: async function(obj){
+        let businessNetworkConnection = new BusinessNetworkConnection();
+        try {
+            await businessNetworkConnection.connect(obj.cardToUse);
+            var query = businessNetworkConnection.buildQuery("SELECT pharmatrack.BonCommande WHERE (emetteur == _$code)");
+            const assets = await businessNetworkConnection.query(query, { code: obj.numAutorisation })
+            await businessNetworkConnection.disconnect();
+            return assets;
+
+        } catch (error) {
+            console.log(error);
+        } 
+    },
+    getEmetteurOfBonLivraison: async function(obj){
+        let businessNetworkConnection = new BusinessNetworkConnection();
+        try {
+            await businessNetworkConnection.connect(obj.cardToUse);
+            var query = businessNetworkConnection.buildQuery("SELECT pharmatrack.BonLivraison WHERE (emetteur == _$code)");
+            const assets = await businessNetworkConnection.query(query, { code: obj.numeroAutorisation})
+            await businessNetworkConnection.disconnect();
+            return assets;
+
+        } catch (error) {
+            console.log(error);
+        } 
+    },
+    getDestinataireOfBonCommande: async function(obj){
+        let businessNetworkConnection = new BusinessNetworkConnection();
+        try {
+            await businessNetworkConnection.connect(obj.cardToUse);
+            var query = businessNetworkConnection.buildQuery("SELECT pharmatrack.BonCommande WHERE (destinataire == _$code)");
+            const assets = await businessNetworkConnection.query(query, { code: obj.numeroAutorisation })
+            await businessNetworkConnection.disconnect();
+            return assets;
+
+        } catch (error) {
+            console.log(error);
+        } 
+    },
+    getDestinataireOfBonLivraison: async function(obj){
+        let businessNetworkConnection = new BusinessNetworkConnection();
+        try {
+            await businessNetworkConnection.connect(obj.cardToUse);
+            var query = businessNetworkConnection.buildQuery("SELECT pharmatrack.BonLivraison WHERE (destinataire == _$code)");
+            const assets = await businessNetworkConnection.query(query, { code: obj.numeroAutorisation })
+            await businessNetworkConnection.disconnect();
+            return assets;
+
+        } catch (error) {
+            console.log(error);
+        } 
     }
 }

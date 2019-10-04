@@ -28,8 +28,8 @@ router.post('/Connexion',(req, res) => {
                     login: user.login,
                     pass: user.pass
                 }
-                console.log(user);
-                res.send(user);
+                console.log(response);
+                res.send(response);
             }else{
                 console.log(err);
             }
@@ -73,6 +73,7 @@ router.post('/getEtablissements', async function (req, res, next) {
     }
     
 })
+
 router.post("/addMedicament", async function(req,res, next){
 
     console.log("addMedicament: ",req.body);
@@ -84,8 +85,9 @@ router.post("/addMedicament", async function(req,res, next){
         console.log(err.stack);
     };
 });
+
 router.post('/getAssets', async function (req, res, next) {
-    console.log("------Query----\n ",req.body);
+    console.log("getAssets: ",req.body);
     var Assets =[]
 
     try {
@@ -109,6 +111,7 @@ router.post('/AddBonLivraison', (req, res) => {
 
 router.post('/AddBonCommande', async(req, res) => {
     let result = "vide";
+    console.log("AddBonCommande recois: ",req.body);
     try {
         result = await bnUtil.AddBonCommande(req.body);
         res.send(result);
@@ -177,9 +180,8 @@ router.get('/IsMedicament', async function(req, res) {
 
 router.get('/getTrace', async function(req, res) {
 
-    let result;
     bnUtil.getTrace(req.query.code).then((result) => {
-        console.log(result);
+        console.log("trace: ",result);
         res.send(result);
     }).catch((err) => {
         console.log(err.stack); 
@@ -198,7 +200,8 @@ router.post('/confirmerLivraison', async function(req, res) {
 
    
 });
-router.post('/IsBonLivraison', (req, res) => {
+
+router.post('/IsBonLivraison', async(req, res) => {
     try {
         var result = await bnUtil.IsBonLivraison(req.body);
         res.send(result)
@@ -206,10 +209,47 @@ router.post('/IsBonLivraison', (req, res) => {
         console.log(error.stack);
     }
 });
-router.post('/IsBonCommande', (req, res) => {
+
+router.post('/IsBonCommande', async(req, res) => {
     try {
         var result = await bnUtil.IsBonCommande(req.body);
         res.send(result)
+    } catch (error) {
+        console.log(error.stack);
+    }
+});
+router.post('/getEmetteurOfBonCommande', async(req, res) => {
+    try {
+        var result =await  bnUtil.getEmetteurOfBonCommande(req.body)
+        console.log(result);
+        res.send(result);
+    } catch (error) {
+        console.log(error.stack);
+    }
+});
+router.post('/getDestinataireOfBonCommande', async(req, res) => {
+    try {
+        var result = await bnUtil.getDestinataireOfBonCommande(req.body)
+        console.log(result);
+        res.send(result);
+    } catch (error) {
+        console.log(error.stack);
+    }
+});
+router.post('/getEmetteurOfBonLivraison', async(req, res) => {
+    try {
+        var result = await bnUtil.getEmetteurOfBonLivraison(req.body)
+        console.log(result);
+        res.send(result);
+    } catch (error) {
+        console.log(error.stack);
+    }
+});
+router.post('/getDestinataireOfBonLivraison', async(req, res) => {
+    try {
+        var result = await bnUtil.getDestinataireOfBonLivraison(req.body)
+        console.log(result);
+        res.send(result);
     } catch (error) {
         console.log(error.stack);
     }
